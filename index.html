@@ -91,6 +91,38 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--mono);height:
   display:none;
 }
 
+/* ── SCAN OVERLAY ── */
+#scan-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(5,3,18,0.93);display:none;
+  align-items:center;justify-content:center;z-index:20;
+}
+#scan-box{
+  background:var(--surf);border:1px solid var(--bdr);
+  border-radius:6px;padding:28px 36px;min-width:300px;text-align:center;
+}
+#scan-title{font-size:10px;letter-spacing:3px;color:var(--gold);margin-bottom:18px}
+#scan-bar-wrap{height:3px;background:var(--dim2);border-radius:2px;overflow:hidden;margin-bottom:12px}
+#scan-bar-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width 0.15s}
+#scan-status{font-size:9px;color:var(--dim);letter-spacing:1px}
+#scan-live{font-size:8px;color:var(--dim2);margin-top:5px;height:12px}
+
+/* ── SCAN RESULTS ── */
+#scan-results{display:none;margin-top:10px;border-top:1px solid var(--bdr);padding-top:8px}
+.sr-h{font-size:8px;letter-spacing:2px;color:var(--gold);margin-bottom:6px}
+.sr-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:8px;flex-wrap:nowrap}
+.sr-rank{color:var(--dim);min-width:16px;font-size:7px}
+.sr-score{min-width:22px;color:var(--gold);font-size:9px;font-weight:bold;text-align:right}
+.sr-class{font-size:7px;letter-spacing:1px;padding:1px 5px;border-radius:2px;flex-shrink:0}
+.sr-class-U{background:#101018;color:var(--dim)}
+.sr-class-O{background:#001828;color:#40c4f0}
+.sr-class-C{background:#101800;color:#c0d040}
+.sr-class-X{background:#200008;color:#f04880}
+.sr-num{color:var(--dim2);font-size:7px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-load{font-family:var(--mono);font-size:7px;padding:2px 6px;border-radius:2px;cursor:pointer;border:1px solid var(--bdr);color:var(--dim);background:transparent;flex-shrink:0}
+.sr-load:hover{border-color:var(--gold);color:var(--gold)}
+.sr-note{font-size:7px;color:var(--dim2);margin-left:38px;margin-bottom:5px}
+
 /* ── DRAG HANDLE ── */
 #drag-handle{
   flex-shrink:0;height:9px;background:var(--surf);
@@ -179,6 +211,15 @@ pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
       <div class="ov" id="ov-stats"></div>
       <div class="ov" id="ov-scroll">scroll wheel · view history ↑</div>
 
+      <div id="scan-overlay">
+        <div id="scan-box">
+          <div id="scan-title">SCANNING RULE SPACE</div>
+          <div id="scan-bar-wrap"><div id="scan-bar-fill"></div></div>
+          <div id="scan-status">Preparing…</div>
+          <div id="scan-live"></div>
+        </div>
+      </div>
+
       <div class="ov" id="ov-compare">
         <div id="ov-bin-lbl">BINARY · Rule 90 · 256 possible rules</div>
         <div id="ov-ter-lbl">TERNARY · Outer · 7,625,597,484,987 possible rules</div>
@@ -216,8 +257,18 @@ pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
         <button class="btn pbtn" id="btn-export">⬇ Export</button>
         <span id="view-info" style="font-size:8px;color:var(--dim2);margin-left:4px"></span>
       </div>
+      <div class="cr">
+        <span class="cl">SCAN</span>
+        <button class="btn pbtn" id="btn-scan">▶ Scan 100</button>
+        <button class="btn pbtn" id="btn-scan-export" style="display:none">⬇ Export scan</button>
+        <span style="font-size:7px;color:var(--dim2);margin-left:4px">runs 100 rules × 200 gens · ranks by complexity</span>
+      </div>
       <span id="rule-b3"></span>
       <div id="rule-tbl"></div>
+      <div id="scan-results">
+        <div class="sr-h">SCAN RESULTS — TOP RULES</div>
+        <div id="scan-list"></div>
+      </div>
     </div>
   </div>
 
@@ -693,6 +744,185 @@ function renderProof(n){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SCAN ENGINE
+// ═══════════════════════════════════════════════════════════════
+const SCAN_GENS=200;
+const SCAN_SAMPLE=[10,25,50,75,100,150,200];
+
+let _scanData=null;  // last scan results, for export
+
+function interestScore(entropySamples, finalRatios, cycleDetected, cycleAtGen){
+  if(!entropySamples||!entropySamples.length) return 0;
+  const lastH=entropySamples[entropySamples.length-1];
+  if(lastH<0.08) return 0; // dead
+  let score=0;
+  // Sweet spot: complex but not pure noise
+  if(lastH>0.85&&lastH<1.25) score+=40;
+  else if(lastH>0.55&&lastH<1.4) score+=20;
+  // Variance in last quarter — low = stable complexity
+  const q=entropySamples.slice(Math.floor(entropySamples.length*0.75));
+  const mean=q.reduce((s,h)=>s+h,0)/q.length;
+  const variance=q.reduce((s,h)=>s+(h-mean)**2,0)/q.length;
+  score+=variance<0.005?25:variance<0.02?15:variance<0.08?5:0;
+  // All 3 states present
+  if(finalRatios){
+    const min=Math.min(finalRatios.N,finalRatios.Z,finalRatios.P);
+    score+=min>0.15?25:min>0.06?12:min>0.01?3:-10;
+  }
+  // Cycle: later = more complex state space
+  if(!cycleDetected) score+=10;
+  else if(cycleAtGen>150) score+=5;
+  else if(cycleAtGen<15) score-=20;
+  return Math.max(0,Math.round(score));
+}
+
+function generateNote(r){
+  if(r.interestScore===0) return 'Dead — collapses immediately';
+  if(r.complexity==='Uniform') return 'Uniform — one state dominates';
+  if(r.cycleDetected&&r.cycleAtGen<20) return `Short cycle (period ~${r.cycleAtGen}) — periodic`;
+  if(r.complexity==='Chaotic') return 'Chaotic — high entropy, no stable structure';
+  const min=Math.min(r.finalRatios.N,r.finalRatios.Z,r.finalRatios.P);
+  const dom=Object.entries(r.finalRatios).sort((a,b)=>b[1]-a[1])[0];
+  if(min<0.05) return `${dom[0]} attractor — one state consuming the field`;
+  if(r.complexity==='Complex'&&r.interestScore>60) return 'Class 4 candidate — stable complex structure, all states balanced';
+  if(r.complexity==='Complex') return 'Complex — structured entropy, worth exploring';
+  return 'Ordered — low-entropy stable patterns';
+}
+
+function scanOneRule(rule, cellW){
+  let cells=initCells(cellW,'center');
+  const seenH=new Set();
+  const entropySamples=[];
+  let cycleDetected=false, cycleAtGen=null;
+  let finalRatios=null;
+  const progression={};
+
+  for(let g=1;g<=SCAN_GENS;g++){
+    cells=stepCA(cells,rule);
+    const H=shannonEntropy(cells);
+    entropySamples.push(parseFloat(H.toFixed(4)));
+    if(SCAN_SAMPLE.includes(g)) progression['gen'+g]=parseFloat(H.toFixed(4));
+    if(!cycleDetected){
+      const h=hashCells(cells);
+      if(seenH.has(h)){ cycleDetected=true; cycleAtGen=g; }
+      else seenH.add(h);
+    }
+  }
+  const n=cells.length; let cN=0,cZ=0,cP=0;
+  for(let i=0;i<n;i++){ if(cells[i]===N)cN++;else if(cells[i]===Z)cZ++;else cP++; }
+  finalRatios={N:parseFloat((cN/n).toFixed(3)),Z:parseFloat((cZ/n).toFixed(3)),P:parseFloat((cP/n).toFixed(3))};
+
+  const lastH=entropySamples[entropySamples.length-1];
+  const complexity=lastH<0.3?'Uniform':lastH<0.8?'Ordered':lastH<1.3?'Complex':'Chaotic';
+  const score=interestScore(entropySamples,finalRatios,cycleDetected,cycleAtGen);
+  return{complexity,finalEntropy:parseFloat(lastH.toFixed(4)),entropyProgression:progression,finalRatios,cycleDetected,cycleAtGen:cycleAtGen||null,interestScore:score};
+}
+
+async function runScan(){
+  const TOTAL=100;
+  const cellW=Math.max(80,Math.floor((canvas?.width||600)/Math.max(1,S.cellSize)));
+  const overlay=document.getElementById('scan-overlay');
+  const fill=document.getElementById('scan-bar-fill');
+  const statusEl=document.getElementById('scan-status');
+  const liveEl=document.getElementById('scan-live');
+
+  overlay.style.display='flex';
+  document.getElementById('btn-scan').disabled=true;
+  const results=[];
+
+  for(let i=0;i<TOTAL;i++){
+    if(i%10===0) await new Promise(r=>setTimeout(r,0)); // yield to browser
+    fill.style.width=((i/TOTAL)*100)+'%';
+    statusEl.textContent=`Rule ${i+1} / ${TOTAL}`;
+
+    // Generate rule: skip ones that die in 3 gens
+    let rule, attempts=0;
+    do{ rule=makeRandomRule(); attempts++; } while(attempts<20&&!quickAlive(rule,cellW));
+
+    const ruleNum=encodeRule(rule);
+    const res=scanOneRule(rule,cellW);
+    res.ruleDecimal=ruleNum.toString();
+    res.ruleBase3=ruleNum.toString(3).padStart(27,'0');
+    liveEl.textContent=`${res.complexity} · H=${res.finalEntropy} · score ${res.interestScore}`;
+    results.push(res);
+  }
+
+  // Sort by interest score desc
+  results.sort((a,b)=>b.interestScore-a.interestScore);
+  results.forEach((r,i)=>{ r.rank=i+1; r.note=generateNote(r); });
+
+  // Distribution
+  const dist={Uniform:0,Ordered:0,Complex:0,Chaotic:0};
+  results.forEach(r=>dist[r.complexity]=(dist[r.complexity]||0)+1);
+
+  _scanData={
+    meta:{
+      rulesScanned:TOTAL,generationsPerRule:SCAN_GENS,
+      cellWidth:cellW,initMode:'center',scannedAt:new Date().toISOString(),
+      top5:results.slice(0,5).map(r=>r.ruleDecimal),
+      complexityDistribution:dist,
+    },
+    results,
+  };
+
+  fill.style.width='100%';
+  statusEl.textContent='Complete';
+  await new Promise(r=>setTimeout(r,400));
+  overlay.style.display='none';
+  document.getElementById('btn-scan').disabled=false;
+  document.getElementById('btn-scan-export').style.display='';
+  renderScanResults(results.slice(0,12));
+}
+
+function quickAlive(rule,cols){
+  let cells=initCells(cols,'center');
+  for(let g=0;g<3;g++){
+    cells=stepCA(cells,rule);
+    const first=cells[0]; let same=true;
+    for(let i=1;i<cols;i++) if(cells[i]!==first){same=false;break;}
+    if(!same) return true;
+  }
+  return false;
+}
+
+function renderScanResults(top){
+  const list=document.getElementById('scan-list');
+  const classCode={Uniform:'U',Ordered:'O',Complex:'C',Chaotic:'X'};
+  const classLabel={Uniform:'UNIF',Ordered:'ORD',Complex:'CMPLX',Chaotic:'CHAOS'};
+  let h='';
+  top.forEach((r,i)=>{
+    h+=`<div class="sr-row">
+      <span class="sr-rank">${r.rank}.</span>
+      <span class="sr-score">${r.interestScore}</span>
+      <span class="sr-class sr-class-${classCode[r.complexity]}">${classLabel[r.complexity]}</span>
+      <span class="sr-num" title="${r.ruleDecimal}">${r.ruleDecimal.slice(0,14)}…</span>
+      <button class="sr-load" data-rule="${r.ruleDecimal}" data-name="${r.complexity} #${r.rank}">Load</button>
+    </div>
+    <div class="sr-note">${r.note}</div>`;
+  });
+  list.innerHTML=h;
+  list.querySelectorAll('.sr-load').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      stopCA();
+      const rule=decodeRule(BigInt(btn.dataset.rule));
+      applyRule(rule,btn.dataset.name);
+      startCA();
+    });
+  });
+  document.getElementById('scan-results').style.display='block';
+  document.getElementById('ctrl').scrollTop=document.getElementById('ctrl').scrollHeight;
+}
+
+function exportScanData(){
+  if(!_scanData){ alert('Run a scan first.'); return; }
+  const blob=new Blob([JSON.stringify(_scanData,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`ternary-scan-${_scanData.meta.rulesScanned}rules-${Date.now()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
 const S={
@@ -886,6 +1116,10 @@ window.addEventListener('load',()=>{
 
   // Export
   document.getElementById('btn-export').addEventListener('click', exportData);
+
+  // Scan
+  document.getElementById('btn-scan').addEventListener('click', runScan);
+  document.getElementById('btn-scan-export').addEventListener('click', exportScanData);
 
   // Follow
   document.getElementById('btn-follow').addEventListener('click',()=>{
