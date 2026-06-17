@@ -10,8 +10,7 @@
 :root{
   --bg:#030308;--surf:#0a0a18;--bdr:#181830;
   --gold:#c8922a;--goldL:#e8c87c;--goldD:#1a0e00;
-  --ind:#140830;--dim:#404060;--dim2:#252545;
-  --text:#c0b890;
+  --dim:#404060;--dim2:#252545;--text:#c0b890;
   --mono:'Courier New',monospace;--serif:Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -28,7 +27,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--mono);height:
 #vtabs{display:flex;gap:4px;margin-left:auto}
 .vt{font-size:9px;letter-spacing:1px;padding:4px 10px;border-radius:3px;cursor:pointer;color:var(--dim);border:1px solid transparent}
 .vt.on{color:var(--goldL);border-color:var(--bdr);background:var(--surf)}
-#status{font-size:9px;letter-spacing:1px;color:var(--dim);font-family:var(--mono);flex-shrink:0}
+#status{font-size:9px;letter-spacing:1px;color:var(--dim);flex-shrink:0}
 
 /* ── VIEWS ── */
 .view{flex:1;display:none;flex-direction:column;min-height:0;overflow:hidden}
@@ -38,52 +37,86 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--mono);height:
 #canvas-wrap{flex:1;min-height:0;position:relative;background:var(--bg);overflow:hidden}
 #ca{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 
-/* drag handle between canvas and controls */
+/* ── CANVAS OVERLAYS ── */
+.ov{position:absolute;pointer-events:none;font-family:var(--mono);}
+
+/* top bar — rule name + gen */
+#ov-top{
+  top:0;left:0;right:0;
+  display:flex;align-items:center;gap:12px;
+  padding:5px 10px;background:rgba(3,3,8,0.72);
+  font-size:9px;letter-spacing:1px;
+}
+#ov-rule{color:var(--gold);font-weight:bold;}
+#ov-gen{color:var(--dim);}
+#ov-mode{margin-left:auto;color:var(--dim2);}
+
+/* legend — bottom left */
+#ov-legend{
+  bottom:10px;left:10px;
+  background:rgba(3,3,8,0.80);padding:8px 12px;
+  border-radius:4px;border:1px solid var(--bdr);
+}
+.ol{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:9px;color:var(--text);}
+.ol:last-child{margin-bottom:0}
+.ol-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;border:1px solid #404060;}
+.ol-label{display:flex;flex-direction:column;gap:1px;}
+.ol-name{font-size:10px;}
+.ol-desc{font-size:7px;color:var(--dim);letter-spacing:.5px}
+
+/* live stats — bottom right */
+#ov-stats{
+  bottom:10px;right:10px;
+  background:rgba(3,3,8,0.80);padding:8px 12px;
+  border-radius:4px;border:1px solid var(--bdr);
+  font-size:9px;line-height:1.7;
+}
+.os-row{display:flex;gap:6px;align-items:center;}
+.os-dot{width:7px;height:7px;border-radius:1px;flex-shrink:0;}
+.os-bar{flex:1;height:4px;background:var(--dim2);border-radius:2px;overflow:hidden;min-width:40px;}
+.os-fill{height:100%;border-radius:2px;}
+.os-pct{min-width:28px;text-align:right;color:var(--dim);}
+
+/* compare divider label */
+#ov-compare{top:0;left:0;right:0;display:none;font-size:9px;letter-spacing:1px;}
+#ov-bin-lbl{position:absolute;top:0;left:0;padding:5px 10px;background:rgba(3,3,8,0.80);color:#9060d0;}
+#ov-ter-lbl{position:absolute;top:0;padding:5px 10px;background:rgba(3,3,8,0.80);color:var(--gold);}
+
+/* scroll hint */
+#ov-scroll{
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(3,3,8,0.85);padding:8px 16px;
+  border-radius:4px;border:1px solid var(--bdr);
+  font-size:9px;color:var(--dim);letter-spacing:1px;
+  display:none;
+}
+
+/* ── DRAG HANDLE ── */
 #drag-handle{
   flex-shrink:0;height:9px;background:var(--surf);
   border-top:1px solid var(--bdr);cursor:ns-resize;
   display:flex;align-items:center;justify-content:center;
 }
-#drag-handle::after{
-  content:'▪ ▪ ▪';font-size:5px;color:var(--dim);letter-spacing:3px;line-height:1;
-}
+#drag-handle::after{content:'▪ ▪ ▪';font-size:5px;color:var(--dim);letter-spacing:3px;}
 #drag-handle:hover::after{color:var(--gold)}
 
-#ctrl{
-  flex-shrink:0;height:170px;overflow-y:auto;overflow-x:hidden;
-  background:var(--surf);padding:10px 14px 14px;
-}
+/* ── CONTROLS ── */
+#ctrl{flex-shrink:0;height:175px;overflow-y:auto;overflow-x:hidden;background:var(--surf);padding:10px 14px 14px;}
 .cr{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
 .cr:last-child{margin-bottom:0}
-.cl{font-size:8px;letter-spacing:1px;color:var(--dim);min-width:40px;flex-shrink:0}
-.btn{
-  font-family:var(--mono);font-size:9px;letter-spacing:1px;
-  padding:4px 10px;border-radius:3px;cursor:pointer;
-  border:1px solid var(--bdr);color:var(--text);background:transparent;
-}
+.cl{font-size:8px;letter-spacing:1px;color:var(--dim);min-width:44px;flex-shrink:0}
+.btn{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid var(--bdr);color:var(--text);background:transparent;}
 .btn:active,.btn.on{border-color:var(--gold);color:var(--gold);background:var(--goldD)}
-#rule-in{
-  font-family:var(--mono);font-size:10px;padding:4px 8px;
-  border-radius:3px;border:1px solid var(--bdr);
-  background:var(--bg);color:var(--goldL);width:150px;
-}
+#rule-in{font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:3px;border:1px solid var(--bdr);background:var(--bg);color:var(--goldL);width:150px;}
 .pbtn{font-size:8px;padding:3px 8px}
-#rule-b3{
-  font-size:7px;color:var(--dim2);letter-spacing:0;
-  word-break:break-all;line-height:1.4;margin-top:3px;
-  display:block;
-}
-
-#rule-tbl{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px;padding-bottom:4px}
-.rc{
-  display:flex;flex-direction:column;align-items:center;
-  gap:1px;cursor:pointer;padding:3px 2px;border-radius:2px;
-  border:1px solid transparent;
-}
+#rule-b3{font-size:7px;color:var(--dim2);letter-spacing:0;display:block;margin-top:3px;word-break:break-all;line-height:1.4;}
+#rule-tbl{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px;}
+.rc{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:3px 2px;border-radius:2px;border:1px solid transparent;}
 .rc:hover{border-color:var(--bdr)}
 .rn{display:flex;gap:1px}
 .rd{width:5px;height:5px;border-radius:50%}
 .ro{width:8px;height:4px;border-radius:1px;margin-top:1px}
+#zoom-val{font-size:9px;color:var(--dim);min-width:22px;text-align:center}
 
 /* ── PROOF VIEW ── */
 #view-proof{overflow-y:auto;padding:20px;gap:0}
@@ -91,7 +124,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--mono);height:
 .proof-sub{font-size:11px;color:var(--dim);margin-bottom:18px;line-height:1.8}
 .proof-box{background:var(--surf);border:1px solid var(--bdr);border-radius:5px;padding:16px;margin-bottom:14px}
 .proof-h{font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:12px}
-.cmp-row{display:flex;gap:0;border:1px solid var(--bdr);border-radius:4px;overflow:hidden}
+.cmp-row{display:flex;border:1px solid var(--bdr);border-radius:4px;overflow:hidden}
 .cmp-col{flex:1;padding:16px;text-align:center;border-right:1px solid var(--bdr)}
 .cmp-col:last-child{border-right:none}
 .cmp-h{font-size:8px;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
@@ -100,11 +133,8 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--mono);height:
 .step-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;flex-wrap:wrap}
 .snum{color:var(--dim);min-width:18px;font-size:9px}
 .stag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;letter-spacing:1px}
-.stag-N{background:#1a0838;color:#9060d0}
-.stag-Z{background:#0a0a20;color:#6060a0}
-.stag-P{background:#1a0a00;color:#d09030}
-.stext{color:var(--text);font-size:10px}
-.sdim{color:var(--dim);font-size:10px}
+.stag-N{background:#1a0838;color:#9060d0}.stag-Z{background:#0a0a20;color:#6060a0}.stag-P{background:#1a0a00;color:#d09030}
+.stext{color:var(--text);font-size:10px}.sdim{color:var(--dim);font-size:10px}
 pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
 </style>
 </head>
@@ -121,8 +151,42 @@ pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
 
   <!-- ── CA VIEW ── -->
   <div class="view on" id="view-ca">
-    <div id="canvas-wrap"><canvas id="ca"></canvas></div>
-    <div id="drag-handle" title="Drag to resize"></div>
+    <div id="canvas-wrap">
+      <canvas id="ca"></canvas>
+
+      <!-- overlays -->
+      <div class="ov" id="ov-top">
+        <span id="ov-rule">Outer</span>
+        <span id="ov-gen">Gen 0</span>
+        <span id="ov-mode">ternary · 3 states · 7.6T rules</span>
+      </div>
+
+      <div class="ov" id="ov-legend">
+        <div class="ol">
+          <div class="ol-dot" style="background:#140832"></div>
+          <div class="ol-label"><div class="ol-name">N — negative</div><div class="ol-desc">yin · −1</div></div>
+        </div>
+        <div class="ol">
+          <div class="ol-dot" style="background:#060612"></div>
+          <div class="ol-label"><div class="ol-name">Z — flux</div><div class="ol-desc">zero · 0</div></div>
+        </div>
+        <div class="ol">
+          <div class="ol-dot" style="background:#c8912a"></div>
+          <div class="ol-label"><div class="ol-name">P — positive</div><div class="ol-desc">yang · +1</div></div>
+        </div>
+      </div>
+
+      <div class="ov" id="ov-stats"></div>
+      <div class="ov" id="ov-scroll">scroll wheel · view history ↑</div>
+
+      <div class="ov" id="ov-compare">
+        <div id="ov-bin-lbl">BINARY · Rule 90 · 256 possible rules</div>
+        <div id="ov-ter-lbl">TERNARY · Outer · 7,625,597,484,987 possible rules</div>
+      </div>
+    </div>
+
+    <div id="drag-handle" title="Drag to resize panel"></div>
+
     <div id="ctrl">
       <div class="cr">
         <span class="cl">RULE</span>
@@ -139,8 +203,17 @@ pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
         <button class="btn pbtn" data-preset="outer">Outer</button>
         <button class="btn pbtn" data-preset="cons">Consensus</button>
         <button class="btn pbtn" data-preset="mod">Modular</button>
-        <span class="cl" style="margin-left:auto;color:var(--dim2);font-size:8px" id="init-lbl">init: center</span>
-        <button class="btn pbtn" id="btn-init">toggle</button>
+        <span class="cl" style="margin-left:auto;color:var(--dim2);font-size:8px" id="init-lbl">center</span>
+        <button class="btn pbtn" id="btn-init">init</button>
+      </div>
+      <div class="cr">
+        <span class="cl">VIEW</span>
+        <button class="btn pbtn" id="btn-zm">− zoom</button>
+        <span id="zoom-val">3px</span>
+        <button class="btn pbtn" id="btn-zp">+ zoom</button>
+        <button class="btn pbtn" id="btn-compare">◫ Compare</button>
+        <button class="btn pbtn on" id="btn-follow">↓ Follow</button>
+        <span id="view-info" style="font-size:8px;color:var(--dim2);margin-left:4px"></span>
       </div>
       <span id="rule-b3"></span>
       <div id="rule-tbl"></div>
@@ -151,30 +224,27 @@ pre{font-size:10px;color:var(--goldL);line-height:1.8;overflow-x:auto}
   <div class="view" id="view-proof">
     <div class="proof-title">The Balance Proof</div>
     <div class="proof-sub">
-      N coins, one is heavier. A balance scale returns 3 outcomes:<br>
-      <span class="stag stag-N">N</span>&nbsp; left pan heavier &nbsp;&nbsp;
-      <span class="stag stag-Z">Z</span>&nbsp; balanced &nbsp;&nbsp;
-      <span class="stag stag-P">P</span>&nbsp; right pan heavier<br><br>
-      Each weighing is a native BRANCH3 operation.<br>
-      Optimal result: ⌈log₃(N)⌉ weighings — provably unreachable by binary.
+      N coins, one heavier. A balance scale returns 3 outcomes:<br>
+      <span class="stag stag-N">N</span>&nbsp;left pan heavier&nbsp;&nbsp;
+      <span class="stag stag-Z">Z</span>&nbsp;balanced&nbsp;&nbsp;
+      <span class="stag stag-P">P</span>&nbsp;right pan heavier<br><br>
+      Each weighing is a native BRANCH3. Binary needs 2 comparisons for the same 3-outcome decision.<br>
+      Optimal: ⌈log₃(N)⌉ weighings — provably unreachable by binary.
     </div>
-
     <div class="proof-box">
       <div class="proof-h">COMPARISON</div>
       <div class="cmp-row" id="cmp-row"></div>
     </div>
-
     <div class="proof-box">
       <div class="proof-h">TRACE</div>
       <div class="cr" style="margin-bottom:12px">
         <span class="cl">COINS</span>
         <input id="coin-in" type="number" value="27" min="2" max="729"
-          style="font-family:var(--mono);font-size:12px;padding:4px 8px;border-radius:3px;border:1px solid var(--bdr);background:var(--bg);color:var(--goldL);width:70px" />
+          style="font-family:var(--mono);font-size:12px;padding:4px 8px;border-radius:3px;border:1px solid var(--bdr);background:var(--bg);color:var(--goldL);width:70px"/>
         <button class="btn" id="btn-solve">Solve</button>
       </div>
       <div id="proof-steps"></div>
     </div>
-
     <div class="proof-box">
       <div class="proof-h">BRANCH3 — THE NATIVE OPERATION</div>
       <pre>
@@ -185,7 +255,7 @@ branch3( scale_result,
 )
 
 Binary needs 2 comparisons for 3 outcomes.
-Ternary: 1 operation — matches the structure of the problem.
+Ternary: 1 operation — matches the structure of reality.
 
 For 729 coins:
   binary comparisons needed : 10
@@ -198,173 +268,257 @@ For 729 coins:
 <script>
 // ═══════════════════════════════════════════════════════════════
 // TERNARY VM
-// Trits: N = -1 (yin/negative), Z = 0 (flux/zero), P = 1 (yang/positive)
+// N = −1 (negative/yin)  Z = 0 (flux/zero)  P = +1 (positive/yang)
 // ═══════════════════════════════════════════════════════════════
 const N=-1, Z=0, P=1;
-const TV=[N,Z,P];  // trit indexed by 0,1,2
+const TV=[N,Z,P];
 
 const tnot   = a       => -a;
 const tmin   = (a,b)   => Math.min(a,b);
 const tmax   = (a,b)   => Math.max(a,b);
-const tshift = a       => a===P ? N : a+1;           // N→Z→P→N
+const tshift = a       => a===P ? N : a+1;
 const tcons  = (a,b,c) => { const s=a+b+c; return s>0?P:s<0?N:Z; };
 const tcmp   = (a,b)   => a<b ? N : a>b ? P : Z;
 const branch3= (t,nFn,zFn,pFn) => t===N ? nFn() : t===Z ? zFn() : pFn();
 
 // ═══════════════════════════════════════════════════════════════
-// CA ENGINE
+// TERNARY CA ENGINE
 // ═══════════════════════════════════════════════════════════════
-
-// RGB for each trit state
-const TRIT_RGB = [
+const TRIT_RGB=[
   [20,  8, 50],   // N  — deep indigo
   [ 6,  6, 18],   // Z  — near-black void
   [200,145, 40],  // P  — warm gold
 ];
-// CSS colors for rule table
-const TRIT_CSS = ['#140832','#060612','#c8912a'];
+const TRIT_CSS=['#140832','#060612','#c8912a'];
 
-function encNbr(l,c,r){ return (l+1)*9 + (c+1)*3 + (r+1); }  // → 0..26
+function encNbr(l,c,r){ return (l+1)*9+(c+1)*3+(r+1); }
 
 function decodeRule(ruleNum){
-  const rule = new Int8Array(27);
-  let n = BigInt(ruleNum);
-  for(let i=0; i<27; i++){ rule[i]=TV[Number(n%3n)]; n/=3n; }
+  const rule=new Int8Array(27);
+  let n=BigInt(ruleNum);
+  for(let i=0;i<27;i++){ rule[i]=TV[Number(n%3n)]; n/=3n; }
   return rule;
 }
-
 function encodeRule(rule){
   let n=0n;
-  for(let i=26; i>=0; i--) n = n*3n + BigInt(rule[i]+1);
+  for(let i=26;i>=0;i--) n=n*3n+BigInt(rule[i]+1);
   return n;
 }
-
-function stepCA(cells, rule){
+function stepCA(cells,rule){
   const len=cells.length, next=new Int8Array(len);
-  for(let i=0; i<len; i++){
+  for(let i=0;i<len;i++){
     const l=cells[(i-1+len)%len], c=cells[i], r=cells[(i+1)%len];
-    next[i] = rule[encNbr(l,c,r)];
+    next[i]=rule[encNbr(l,c,r)];
   }
   return next;
 }
-
-function initCells(w, mode){
-  const c = new Int8Array(w).fill(N);
-  if(mode==='center') c[Math.floor(w/2)] = P;
-  else for(let i=0; i<w; i++) c[i] = TV[Math.floor(Math.random()*3)];
+function initCells(w,mode){
+  const c=new Int8Array(w).fill(N);
+  if(mode==='center') c[Math.floor(w/2)]=P;
+  else for(let i=0;i<w;i++) c[i]=TV[Math.floor(Math.random()*3)];
   return c;
 }
 
 // ── PRESET RULES ──
-function makeSumRule(){   // (l+c+r) mod 3 — Sierpinski analog
+function makeSumRule(){
   const rule=new Int8Array(27);
   for(let l=-1;l<=1;l++) for(let c=-1;c<=1;c++) for(let r=-1;r<=1;r++)
-    rule[encNbr(l,c,r)] = TV[((l+c+r)%3+3)%3];
+    rule[encNbr(l,c,r)]=TV[((l+c+r)%3+3)%3];
   return rule;
 }
-function makeOuterRule(){  // (l+r) mod 3 — ignores center, Rule-90 analog
+function makeOuterRule(){
   const rule=new Int8Array(27);
   for(let l=-1;l<=1;l++) for(let c=-1;c<=1;c++) for(let r=-1;r<=1;r++)
-    rule[encNbr(l,c,r)] = TV[((l+r)%3+3)%3];
+    rule[encNbr(l,c,r)]=TV[((l+r)%3+3)%3];
   return rule;
 }
-function makeConsRule(){   // majority vote
+function makeConsRule(){
   const rule=new Int8Array(27);
   for(let l=-1;l<=1;l++) for(let c=-1;c<=1;c++) for(let r=-1;r<=1;r++)
-    rule[encNbr(l,c,r)] = tcons(l,c,r);
+    rule[encNbr(l,c,r)]=tcons(l,c,r);
   return rule;
 }
-function makeModRule(){    // (l*c + r) mod 3 — nonlinear
+function makeModRule(){
   const rule=new Int8Array(27);
   for(let l=-1;l<=1;l++) for(let c=-1;c<=1;c++) for(let r=-1;r<=1;r++)
-    rule[encNbr(l,c,r)] = TV[((l*c+r)%3+3)%3];
+    rule[encNbr(l,c,r)]=TV[((l*c+r)%3+3)%3];
   return rule;
 }
 function makeRandomRule(){
   const rule=new Int8Array(27);
-  for(let i=0; i<27; i++) rule[i]=TV[Math.floor(Math.random()*3)];
+  for(let i=0;i<27;i++) rule[i]=TV[Math.floor(Math.random()*3)];
   return rule;
 }
+const PRESETS={ sum:makeSumRule, outer:makeOuterRule, cons:makeConsRule, mod:makeModRule };
+const PRESET_NAMES={ sum:'Sum', outer:'Outer', cons:'Consensus', mod:'Modular' };
 
-const PRESETS = {
-  sum: makeSumRule, outer: makeOuterRule,
-  cons: makeConsRule, mod: makeModRule,
-};
-
-// ── HUNT: find a visually complex rule ──
-function isInteresting(rule, cols){
-  const rows=20;
+function isInteresting(rule,cols){
   let cells=initCells(cols,'center');
   const seen=new Set();
-  let countP=0, countN=0, countZ=0;
-  for(let g=0; g<rows; g++){
+  let cP=0,cN=0;
+  for(let g=0;g<20;g++){
     cells=stepCA(cells,rule);
-    for(let i=0; i<cols; i++){
-      if(cells[i]===P) countP++;
-      else if(cells[i]===N) countN++;
-      else countZ++;
-    }
+    for(let i=0;i<cols;i++){ if(cells[i]===P)cP++; else if(cells[i]===N)cN++; }
     seen.add(cells.join(','));
   }
-  const total=rows*cols;
-  const pPct=countP/total, nPct=countN/total, zPct=countZ/total;
-  // All same state = boring
-  if(pPct<0.01||nPct<0.01) return false;
-  // All identical rows = boring (periodic)
+  const tot=20*cols;
+  if(cP/tot<0.01||cN/tot<0.01) return false;
   if(seen.size<4) return false;
-  // Too uniform = noise
-  const maxPct=Math.max(pPct,nPct,zPct);
-  if(maxPct>0.92) return false;
+  if(Math.max(cP,tot-cP-cN)/tot>0.92) return false;
   return true;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BINARY CA ENGINE (for comparison)
+// Rule 90: output = left XOR right  (the binary analog of Outer)
+// ═══════════════════════════════════════════════════════════════
+const BINARY_RGB=[
+  [6, 6, 18],      // 0 — near-black
+  [200,145,40],    // 1 — gold
+];
+const BINARY_RULE=90;
+
+function initBinaryCells(w,mode){
+  const c=new Uint8Array(w).fill(0);
+  if(mode==='center') c[Math.floor(w/2)]=1;
+  else for(let i=0;i<w;i++) c[i]=Math.random()<0.5?1:0;
+  return c;
+}
+function stepBinaryCA(cells){
+  const len=cells.length, next=new Uint8Array(len);
+  for(let i=0;i<len;i++){
+    const idx=(cells[(i-1+len)%len]<<2)|(cells[i]<<1)|cells[(i+1)%len];
+    next[i]=(BINARY_RULE>>idx)&1;
+  }
+  return next;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // RENDERER
 // ═══════════════════════════════════════════════════════════════
-const CELL=3;
-let canvas, ctx, imgData, cols, rows;
+let canvas, ctx;
+const MAX_HISTORY=8000;
 
 function initCanvas(){
   canvas=document.getElementById('ca');
-  ctx=canvas.getContext('2d');
+  ctx=canvas.getContext('2d',{willReadFrequently:true});
   const wrap=document.getElementById('canvas-wrap');
   const W=wrap.clientWidth, H=wrap.clientHeight;
   canvas.width=W; canvas.height=H;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  cols=Math.floor(W/CELL); rows=Math.floor(H/CELL);
-  imgData=ctx.createImageData(W,H);
-  fillBg();
 }
 
-function fillBg(){
-  const d=imgData.data, [r,g,b]=TRIT_RGB[Z+1];
-  for(let i=0; i<d.length; i+=4){ d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255; }
-}
-
-function paintRow(gen, cells){
-  if(gen>=rows) return false;
-  const d=imgData.data, W=canvas.width, y=gen*CELL;
-  for(let x=0; x<cols; x++){
+// Draw a single row of ternary cells at pixel-y on canvas
+function drawTRow(cells,px,x0,maxCols){
+  const cs=S.cellSize, W=canvas.width;
+  const imgRow=ctx.createImageData(Math.min(maxCols,cells.length)*cs, cs);
+  const d=imgRow.data;
+  const cols=Math.min(maxCols,cells.length);
+  for(let x=0;x<cols;x++){
     const [r,g,b]=TRIT_RGB[cells[x]+1];
-    for(let dy=0; dy<CELL; dy++) for(let dx=0; dx<CELL; dx++){
-      const i=((y+dy)*W+(x*CELL+dx))*4;
-      d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=255;
+    for(let dy=0;dy<cs;dy++) for(let dx=0;dx<cs;dx++){
+      const i=(dy*(cols*cs)+(x*cs+dx))*4;
+      d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255;
     }
   }
-  return true;
+  ctx.putImageData(imgRow,x0,px);
 }
 
-function flush(){ ctx.putImageData(imgData,0,0); }
+// Draw a single row of binary cells at pixel-y
+function drawBRow(cells,px,x0,maxCols){
+  const cs=S.cellSize;
+  const cols=Math.min(maxCols,cells.length);
+  const imgRow=ctx.createImageData(cols*cs,cs);
+  const d=imgRow.data;
+  for(let x=0;x<cols;x++){
+    const [r,g,b]=BINARY_RGB[cells[x]||0];
+    for(let dy=0;dy<cs;dy++) for(let dx=0;dx<cs;dx++){
+      const i=(dy*(cols*cs)+(x*cs+dx))*4;
+      d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255;
+    }
+  }
+  ctx.putImageData(imgRow,x0,px);
+}
+
+function clearCanvas(){
+  const [r,g,b]=TRIT_RGB[Z+1];
+  ctx.fillStyle=`rgb(${r},${g},${b})`;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(S.compareMode) drawDivider();
+}
+
+function drawDivider(){
+  const halfW=Math.floor(canvas.width/2);
+  ctx.fillStyle='#282848';
+  ctx.fillRect(halfW,0,1,canvas.height);
+}
+
+// Fast scroll: shift canvas up by one row, draw new row at bottom
+function scrollAndDraw(tCells, bCells){
+  const cs=S.cellSize, W=canvas.width, H=canvas.height;
+  const visRows=Math.floor(H/cs);
+  const newY=(visRows-1)*cs;
+
+  // Shift existing content up
+  ctx.drawImage(canvas,0,0,W,H-cs,0,-cs,W,H-cs);
+
+  // Clear bottom row (bg)
+  const [br,bg,bb]=TRIT_RGB[Z+1];
+  ctx.fillStyle=`rgb(${br},${bg},${bb})`;
+  ctx.fillRect(0,newY,W,cs);
+
+  if(S.compareMode){
+    const halfW=Math.floor(W/2);
+    const bCols=Math.floor(halfW/cs);
+    const tCols=Math.floor((W-halfW-1)/cs);
+    if(bCells) drawBRow(bCells,newY,0,bCols);
+    ctx.fillStyle='#282848';
+    ctx.fillRect(halfW,newY,1,cs);
+    if(tCells) drawTRow(tCells,newY,halfW+1,tCols);
+  } else {
+    const tCols=Math.floor(W/cs);
+    if(tCells) drawTRow(tCells,newY,0,tCols);
+  }
+}
+
+// Full re-render from history (used when scrolling back)
+function renderFromHistory(){
+  clearCanvas();
+  const W=canvas.width, H=canvas.height;
+  const cs=S.cellSize;
+  const visRows=Math.floor(H/cs);
+  const start=S.viewStart;
+
+  if(S.compareMode){
+    const halfW=Math.floor(W/2);
+    const bCols=Math.floor(halfW/cs);
+    const tCols=Math.floor((W-halfW-1)/cs);
+    for(let row=0;row<visRows;row++){
+      const hi=start+row;
+      if(hi>=S.tHistory.length) break;
+      const py=row*cs;
+      if(S.bHistory[hi]) drawBRow(S.bHistory[hi],py,0,bCols);
+      if(S.tHistory[hi]) drawTRow(S.tHistory[hi],py,halfW+1,tCols);
+    }
+    drawDivider();
+  } else {
+    const tCols=Math.floor(W/cs);
+    for(let row=0;row<visRows;row++){
+      const hi=start+row;
+      if(hi>=S.tHistory.length) break;
+      if(S.tHistory[hi]) drawTRow(S.tHistory[hi],row*cs,0,tCols);
+    }
+  }
+}
 
 // ── RULE TABLE ──
 function renderRuleTable(rule){
   const el=document.getElementById('rule-tbl');
-  const names=['N','Z','P'];
+  const nm=['N','Z','P'];
   let h='';
-  for(let i=0; i<27; i++){
-    const l=Math.floor(i/9)-1, c=Math.floor(i/3)%3-1, r=i%3-1;
-    const out=rule[i];
-    h+=`<div class="rc" data-i="${i}" title="${names[l+1]},${names[c+1]},${names[r+1]} → ${names[out+1]}">
+  for(let i=0;i<27;i++){
+    const l=Math.floor(i/9)-1, c=Math.floor(i/3)%3-1, r=i%3-1, out=rule[i];
+    h+=`<div class="rc" data-i="${i}" title="${nm[l+1]},${nm[c+1]},${nm[r+1]} → ${nm[out+1]}">
       <div class="rn">
         <div class="rd" style="background:${TRIT_CSS[l+1]}"></div>
         <div class="rd" style="background:${TRIT_CSS[c+1]}"></div>
@@ -380,16 +534,53 @@ function renderRuleTable(rule){
       S.rule[i]=tshift(S.rule[i]);
       S.ruleNum=encodeRule(S.rule);
       document.getElementById('rule-in').value=S.ruleNum.toString();
-      updateB3();
-      renderRuleTable(S.rule);
-      resetCA();
+      updateB3(); renderRuleTable(S.rule); resetCA();
     });
   });
 }
-
 function updateB3(){
-  const b3=S.ruleNum.toString(3).padStart(27,'0');
-  document.getElementById('rule-b3').textContent='base3: '+b3;
+  document.getElementById('rule-b3').textContent='base3: '+S.ruleNum.toString(3).padStart(27,'0');
+}
+
+// ── OVERLAYS ──
+function updateOverlays(){
+  const cs=S.cellSize, W=canvas?canvas.width:0;
+
+  // Top bar
+  document.getElementById('ov-gen').textContent=`Gen ${S.gen}`;
+
+  if(S.compareMode){
+    document.getElementById('ov-top').style.display='none';
+    document.getElementById('ov-compare').style.display='block';
+    const halfW=Math.floor(W/2);
+    document.getElementById('ov-ter-lbl').style.left=(halfW+4)+'px';
+    document.getElementById('ov-legend').style.display='none';
+    document.getElementById('ov-stats').style.display='none';
+  } else {
+    document.getElementById('ov-top').style.display='flex';
+    document.getElementById('ov-compare').style.display='none';
+    document.getElementById('ov-legend').style.display='block';
+    document.getElementById('ov-stats').style.display='block';
+  }
+
+  // Scroll hint
+  const visRows=canvas?Math.floor(canvas.height/cs):0;
+  const atBottom=S.viewStart>=S.tHistory.length-visRows;
+  document.getElementById('ov-scroll').style.display=(!atBottom&&S.tHistory.length>0)?'block':'none';
+  document.getElementById('view-info').textContent=
+    !atBottom?`viewing ${S.viewStart}–${S.viewStart+visRows} of ${S.tHistory.length}`:'';
+}
+
+function updateStats(){
+  if(S.compareMode||!S.cells) return;
+  const cells=S.cells, n=cells.length;
+  let cN=0,cZ=0,cP=0;
+  for(let i=0;i<n;i++){ if(cells[i]===N)cN++; else if(cells[i]===Z)cZ++; else cP++; }
+  const pN=(cN/n*100).toFixed(0), pZ=(cZ/n*100).toFixed(0), pP=(cP/n*100).toFixed(0);
+  document.getElementById('ov-stats').innerHTML=`
+    <div class="os-row"><div class="os-dot" style="background:#140832"></div>N<div class="os-bar"><div class="os-fill" style="width:${pN}%;background:#1a0a4a"></div></div><span class="os-pct">${pN}%</span></div>
+    <div class="os-row"><div class="os-dot" style="background:#060612"></div>Z<div class="os-bar"><div class="os-fill" style="width:${pZ}%;background:#252545"></div></div><span class="os-pct">${pZ}%</span></div>
+    <div class="os-row"><div class="os-dot" style="background:#c8912a"></div>P<div class="os-bar"><div class="os-fill" style="width:${pP}%;background:#c8922a"></div></div><span class="os-pct">${pP}%</span></div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,8 +592,7 @@ function solveBalance(n){
   const steps=[];
   while(pool.length>1){
     const g=Math.max(1,Math.floor(pool.length/3));
-    const g1=pool.slice(0,g), g2=pool.slice(g,2*g), g3=pool.slice(2*g);
-    // N = left heavier (g1 has heavy), Z = balanced (g3), P = right heavier (g2)
+    const g1=pool.slice(0,g),g2=pool.slice(g,2*g),g3=pool.slice(2*g);
     const sr=g1.includes(heavy)?N:g2.includes(heavy)?P:Z;
     const next=branch3(sr,()=>g1,()=>g3,()=>g2);
     steps.push({g1l:g1.length,g2l:g2.length,g3l:g3.length,sr,rem:next.length});
@@ -410,86 +600,90 @@ function solveBalance(n){
   }
   return{heavy,found:pool[0],steps};
 }
-
 function renderProof(n){
-  const{heavy,found,steps}=solveBalance(n);
+  const{heavy,steps}=solveBalance(n);
   const t3=Math.ceil(Math.log(n)/Math.log(3));
   const t2=Math.ceil(Math.log2(n));
-  const saved=t2-t3;
-
   document.getElementById('cmp-row').innerHTML=`
-    <div class="cmp-col">
-      <div class="cmp-h">BINARY</div>
-      <div class="cmp-num">${t2}</div>
-      <div class="cmp-lbl">comparisons for ${n} coins</div>
-    </div>
-    <div class="cmp-col">
-      <div class="cmp-h">TERNARY</div>
-      <div class="cmp-num" style="color:var(--goldL)">${t3}</div>
-      <div class="cmp-lbl">BRANCH3 ops — optimal</div>
-    </div>
-    <div class="cmp-col">
-      <div class="cmp-h">DIFFERENCE</div>
-      <div class="cmp-num" style="color:#8aba70">${saved}</div>
-      <div class="cmp-lbl">fewer operations</div>
-    </div>`;
-
+    <div class="cmp-col"><div class="cmp-h">BINARY</div><div class="cmp-num">${t2}</div><div class="cmp-lbl">comparisons for ${n} coins</div></div>
+    <div class="cmp-col"><div class="cmp-h">TERNARY</div><div class="cmp-num" style="color:var(--goldL)">${t3}</div><div class="cmp-lbl">BRANCH3 ops — optimal</div></div>
+    <div class="cmp-col"><div class="cmp-h">FEWER OPS</div><div class="cmp-num" style="color:#8aba70">${t2-t3}</div><div class="cmp-lbl">saved by ternary</div></div>`;
   const labels={[N]:'left heavy',[Z]:'balanced',[P]:'right heavy'};
   const tags={[N]:'N',[Z]:'Z',[P]:'P'};
   let h='';
   steps.forEach((s,i)=>{
-    h+=`<div class="step-row">
-      <span class="snum">${i+1}.</span>
-      <span class="sdim">⚖ ${s.g1l} vs ${s.g2l}  (+${s.g3l} aside)</span>
-      <span class="stag stag-${tags[s.sr]}">${tags[s.sr]}</span>
-      <span class="stext">${labels[s.sr]}</span>
-      <span class="sdim">→ ${s.rem} remain</span>
-    </div>`;
+    h+=`<div class="step-row"><span class="snum">${i+1}.</span><span class="sdim">⚖ ${s.g1l} vs ${s.g2l} (+${s.g3l} aside)</span><span class="stag stag-${tags[s.sr]}">${tags[s.sr]}</span><span class="stext">${labels[s.sr]}</span><span class="sdim">→ ${s.rem} remain</span></div>`;
   });
-  h+=`<div class="step-row" style="margin-top:10px">
-    <span class="stag stag-P" style="font-size:10px">◈</span>
-    <span class="stext">Coin #${heavy} found in ${steps.length} weighing${steps.length!==1?'s':''}</span>
-  </div>`;
+  h+=`<div class="step-row" style="margin-top:10px"><span class="stag stag-P">◈</span><span class="stext">Coin #${heavy} found in ${steps.length} weighing${steps.length!==1?'s':''}</span></div>`;
   document.getElementById('proof-steps').innerHTML=h;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// STATE & LOOP
+// STATE
 // ═══════════════════════════════════════════════════════════════
 const S={
-  rule:null, ruleNum:0n,
-  cells:null, gen:0,
+  rule:null, ruleNum:0n, ruleName:'Outer',
+  cells:null, bCells:null, gen:0,
   running:false, timer:null,
-  initMode:'center',
-  speed:60,
+  initMode:'center', speed:60,
+  cellSize:3,
+  tHistory:[], bHistory:[],
+  viewStart:0, autoScroll:true,
+  compareMode:false,
 };
 
-function applyRule(rule){
-  S.rule=rule;
-  S.ruleNum=encodeRule(rule);
+function applyRule(rule, name){
+  S.rule=rule; S.ruleNum=encodeRule(rule); S.ruleName=name||'Custom';
   document.getElementById('rule-in').value=S.ruleNum.toString();
-  updateB3();
-  renderRuleTable(rule);
-  resetCA();
+  document.getElementById('ov-rule').textContent=S.ruleName;
+  updateB3(); renderRuleTable(rule); resetCA();
 }
 
 function resetCA(){
   stopCA();
-  if(!cols) return;
-  S.cells=initCells(cols,S.initMode);
-  S.gen=0;
-  fillBg();
-  flush();
-  updateStatus();
+  if(!canvas) return;
+  const W=canvas.width, cs=S.cellSize;
+  if(S.compareMode){
+    const halfW=Math.floor(W/2);
+    const bW=halfW, tW=W-halfW-1;
+    S.cells=initCells(Math.floor(tW/cs), S.initMode);
+    S.bCells=initBinaryCells(Math.floor(bW/cs), S.initMode);
+  } else {
+    S.cells=initCells(Math.floor(W/cs), S.initMode);
+    S.bCells=null;
+  }
+  S.tHistory=[]; S.bHistory=[];
+  S.gen=0; S.viewStart=0; S.autoScroll=true;
+  clearCanvas();
+  updateStatus(); updateOverlays();
+}
+
+function addHistory(tCells,bCells){
+  S.tHistory.push(new Int8Array(tCells));
+  if(bCells) S.bHistory.push(new Uint8Array(bCells));
+  if(S.tHistory.length>MAX_HISTORY){
+    S.tHistory.shift();
+    if(S.bHistory.length>MAX_HISTORY) S.bHistory.shift();
+    if(S.viewStart>0) S.viewStart=Math.max(0,S.viewStart-1);
+  }
 }
 
 function runStep(){
-  if(S.gen>=rows){ stopCA(); return; }
-  paintRow(S.gen,S.cells);
-  S.cells=stepCA(S.cells,S.rule);
+  addHistory(S.cells, S.bCells);
+
+  // Advance state
+  const nextT=stepCA(S.cells,S.rule);
+  const nextB=S.compareMode?stepBinaryCA(S.bCells):null;
+  S.cells=nextT; if(nextB) S.bCells=nextB;
   S.gen++;
-  flush();
-  updateStatus();
+
+  const visRows=Math.floor(canvas.height/S.cellSize);
+  if(S.autoScroll){
+    S.viewStart=Math.max(0,S.tHistory.length-visRows);
+    scrollAndDraw(S.tHistory[S.tHistory.length-1], S.bHistory[S.bHistory.length-1]||null);
+  }
+
+  updateStatus(); updateStats(); updateOverlays();
 }
 
 function startCA(){
@@ -499,19 +693,17 @@ function startCA(){
   document.getElementById('btn-run').textContent='⏸ Pause';
   S.timer=setInterval(runStep,S.speed);
 }
-
 function stopCA(){
   if(!S.running) return;
-  S.running=false;
-  clearInterval(S.timer); S.timer=null;
+  S.running=false; clearInterval(S.timer); S.timer=null;
   document.getElementById('btn-run').classList.remove('on');
   document.getElementById('btn-run').textContent='▶ Run';
 }
-
-function toggleCA(){ S.running ? stopCA() : startCA(); }
+function toggleCA(){ S.running?stopCA():startCA(); }
 
 function updateStatus(){
   document.getElementById('status').textContent=`GEN ${S.gen}`;
+  document.getElementById('ov-gen').textContent=`Gen ${S.gen}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -519,7 +711,7 @@ function updateStatus(){
 // ═══════════════════════════════════════════════════════════════
 window.addEventListener('load',()=>{
   initCanvas();
-  applyRule(makeOuterRule());  // Outer rule → Sierpinski-like on first load
+  applyRule(makeOuterRule(),'Outer');
   renderProof(27);
   startCA();
 
@@ -533,61 +725,98 @@ window.addEventListener('load',()=>{
     });
   });
 
-  // CA controls
-  document.getElementById('btn-run').addEventListener('click', toggleCA);
-  document.getElementById('btn-step').addEventListener('click',()=>{ stopCA(); runStep(); });
-  document.getElementById('btn-reset').addEventListener('click', resetCA);
+  // Run controls
+  document.getElementById('btn-run').addEventListener('click',toggleCA);
+  document.getElementById('btn-step').addEventListener('click',()=>{stopCA();runStep();});
+  document.getElementById('btn-reset').addEventListener('click',resetCA);
 
   document.getElementById('btn-random').addEventListener('click',()=>{
-    stopCA(); applyRule(makeRandomRule());
+    stopCA(); applyRule(makeRandomRule(),'Random');
   });
-
   document.getElementById('btn-hunt').addEventListener('click',()=>{
     stopCA();
     let rule, attempts=0;
-    do{ rule=makeRandomRule(); attempts++; } while(!isInteresting(rule,cols) && attempts<500);
-    applyRule(rule);
-    if(attempts===500) console.log('Hunt exhausted — showing last rule');
+    do{ rule=makeRandomRule(); attempts++; } while(!isInteresting(rule,Math.floor(canvas.width/S.cellSize))&&attempts<500);
+    applyRule(rule,'Hunt #'+Math.floor(Math.random()*999));
   });
 
   document.querySelectorAll('[data-preset]').forEach(btn=>{
-    btn.addEventListener('click',()=>{ stopCA(); applyRule(PRESETS[btn.dataset.preset]()); });
+    btn.addEventListener('click',()=>{ stopCA(); applyRule(PRESETS[btn.dataset.preset](),PRESET_NAMES[btn.dataset.preset]); });
   });
 
   document.getElementById('btn-init').addEventListener('click',()=>{
-    S.initMode = S.initMode==='center' ? 'random' : 'center';
-    document.getElementById('init-lbl').textContent='init: '+S.initMode;
+    S.initMode=S.initMode==='center'?'random':'center';
+    document.getElementById('init-lbl').textContent=S.initMode;
     resetCA();
   });
 
-  document.getElementById('rule-in').addEventListener('change', e=>{
+  document.getElementById('rule-in').addEventListener('change',e=>{
     try{
-      const n=BigInt(e.target.value.replace(/\D/g,'') || '0');
-      stopCA();
-      S.rule=decodeRule(n);
-      S.ruleNum=n;
-      updateB3();
-      renderRuleTable(S.rule);
-      resetCA();
+      const n=BigInt(e.target.value.replace(/\D/g,'')||'0');
+      stopCA(); S.rule=decodeRule(n); S.ruleNum=n; S.ruleName='Custom';
+      document.getElementById('ov-rule').textContent='Custom';
+      updateB3(); renderRuleTable(S.rule); resetCA();
     }catch(_){}
   });
 
-  // Proof controls
-  document.getElementById('btn-solve').addEventListener('click',()=>{
-    renderProof(parseInt(document.getElementById('coin-in').value)||27);
+  // Zoom
+  document.getElementById('btn-zm').addEventListener('click',()=>{
+    if(S.cellSize<=1) return;
+    S.cellSize--; document.getElementById('zoom-val').textContent=S.cellSize+'px';
+    stopCA(); resetCA();
   });
-  document.getElementById('coin-in').addEventListener('change',()=>{
-    renderProof(parseInt(document.getElementById('coin-in').value)||27);
+  document.getElementById('btn-zp').addEventListener('click',()=>{
+    if(S.cellSize>=8) return;
+    S.cellSize++; document.getElementById('zoom-val').textContent=S.cellSize+'px';
+    stopCA(); resetCA();
   });
+
+  // Compare mode
+  document.getElementById('btn-compare').addEventListener('click',()=>{
+    S.compareMode=!S.compareMode;
+    document.getElementById('btn-compare').classList.toggle('on',S.compareMode);
+    if(S.compareMode){
+      // Force outer rule for ternary side (clearest comparison)
+      S.rule=makeOuterRule(); S.ruleNum=encodeRule(S.rule); S.ruleName='Outer';
+      document.getElementById('rule-in').value=S.ruleNum.toString();
+      updateB3(); renderRuleTable(S.rule);
+      document.getElementById('ov-mode').textContent='binary Rule 90 vs ternary Outer';
+    } else {
+      document.getElementById('ov-mode').textContent='ternary · 3 states · 7.6T rules';
+    }
+    stopCA(); resetCA();
+  });
+
+  // Follow
+  document.getElementById('btn-follow').addEventListener('click',()=>{
+    S.autoScroll=true;
+    document.getElementById('btn-follow').classList.add('on');
+    const visRows=Math.floor(canvas.height/S.cellSize);
+    S.viewStart=Math.max(0,S.tHistory.length-visRows);
+    if(S.tHistory.length>0) renderFromHistory();
+    updateOverlays();
+  });
+
+  // Scroll wheel to look back in history
+  document.getElementById('canvas-wrap').addEventListener('wheel',e=>{
+    e.preventDefault();
+    const delta=Math.sign(e.deltaY);
+    const visRows=Math.floor(canvas.height/S.cellSize);
+    S.viewStart=Math.max(0,Math.min(Math.max(0,S.tHistory.length-visRows),S.viewStart+delta*3));
+    S.autoScroll=(S.viewStart>=S.tHistory.length-visRows);
+    document.getElementById('btn-follow').classList.toggle('on',S.autoScroll);
+    renderFromHistory();
+    updateOverlays();
+  },{passive:false});
 
   // Drag-to-resize panel
   (function(){
     const handle=document.getElementById('drag-handle');
     const ctrl=document.getElementById('ctrl');
-    let dragging=false, startY=0, startH=0;
-    function onStart(y){dragging=true;startY=y;startH=ctrl.offsetHeight;document.body.style.cursor='ns-resize';}
-    function onMove(y){if(!dragging)return;const h=Math.max(48,Math.min(window.innerHeight*0.7,startH+(startY-y)));ctrl.style.height=h+'px';}
-    function onEnd(){if(!dragging)return;dragging=false;document.body.style.cursor='';initCanvas();S.cells=initCells(cols,S.initMode);S.gen=0;fillBg();flush();updateStatus();}
+    let dragging=false,startY=0,startH=0;
+    const onStart=y=>{dragging=true;startY=y;startH=ctrl.offsetHeight;document.body.style.cursor='ns-resize';};
+    const onMove=y=>{if(!dragging)return;const h=Math.max(48,Math.min(window.innerHeight*0.7,startH+(startY-y)));ctrl.style.height=h+'px';};
+    const onEnd=()=>{if(!dragging)return;dragging=false;document.body.style.cursor='';initCanvas();resetCA();};
     handle.addEventListener('mousedown',e=>{onStart(e.clientY);e.preventDefault();});
     document.addEventListener('mousemove',e=>onMove(e.clientY));
     document.addEventListener('mouseup',onEnd);
@@ -598,13 +827,18 @@ window.addEventListener('load',()=>{
 
   // Window resize
   window.addEventListener('resize',()=>{
-    stopCA();
-    initCanvas();
-    S.cells=initCells(cols,S.initMode);
-    S.gen=0;
-    fillBg(); flush();
-    updateStatus();
+    stopCA(); initCanvas(); resetCA();
   });
+
+  // Proof
+  document.getElementById('btn-solve').addEventListener('click',()=>{
+    renderProof(parseInt(document.getElementById('coin-in').value)||27);
+  });
+  document.getElementById('coin-in').addEventListener('change',()=>{
+    renderProof(parseInt(document.getElementById('coin-in').value)||27);
+  });
+
+  updateOverlays();
 });
 </script>
 </body>
