@@ -209,6 +209,37 @@ scan2d_fast.py   — optimized 2D scanner, found 5 glider rules
 
 ---
 
+## Applied: Ternary Sync Engine (June 2026)
+
+The math found its first real-world application in BYOB — a multi-speaker
+distributed audio sync system. The connection: sync state is naturally ternary.
+
+```
+N (−1)  diverging    — drift ≥ 50ms  — snap
+Z ( 0)  negotiating  — drift 10-50ms — micro-correct
+P (+1)  converged    — drift < 10ms  — hold
+```
+
+**What binary was missing:** devices spent 98.5% of a session at >50ms drift.
+Binary's 150ms threshold ignored all of it. Ternary corrects the 50–150ms zone
+that binary calls "idle." Same math: `tcmp()` measures phase difference,
+`tcons()` coordinates across the network without a master clock.
+
+**Real session results:**
+- Snap counts dropped: 76/47/37 → 25/6/11 per device
+- Device 10 seconds out of sync snapped to 76ms in one correction
+- Systematic floor detected: `deviceLatencyMs` miscalibration, not random drift
+- Phase 3: auto-calibration closes the floor using 8-tick stability detection
+
+**Files:** `/home/lewis/byob/ternary/` — `layer.js`, `overlay.html`, `README.md`
+**Repo:** https://github.com/heyneeff/byob (ternary/ folder)
+
+This is the first known application of balanced ternary mathematics to
+distributed audio synchronisation. `tcons()` enables leaderless phase
+consensus — devices sense each other (hexagram 31) without a master clock.
+
+---
+
 ## Roadmap
 
 ### Next: 2D Cascade
