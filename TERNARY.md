@@ -238,6 +238,26 @@ This is the first known application of balanced ternary mathematics to
 distributed audio synchronisation. `tcons()` enables leaderless phase
 consensus — devices sense each other (hexagram 31) without a master clock.
 
+**Phase 5 — The Cauldron (June 18, 2026):** The ternary layer became
+the engine itself. `sync/ternary-engine.js` replaced the binary engine
+in production. Sim result: −35% settled drift, 0 volume dips vs binary's 20.
+First live session: 80% P-state convergence (was 0% with binary).
+
+**Phase 5.1 — Octonary Calibration:** The 8 lower trigrams of the I Ching
+became the state machine for Bluetooth latency correction. Three ticks of
+calibration history (N=floor present, P=floor gone) encode one of 8 trigrams,
+each mapped to a correction strength. The sequence shifts with `tshift()`.
+A 130ms BT floor closes to <10ms in ~25 seconds without microphone access.
+
+```
+☰ NNN → 70%   ☱ NNP → 55%   ☲ NPN → 50%   ☳ NPP → 35%
+☴ PNN → 60%   ☵ PNP → 40%   ☶ PPN → 25%   ☷ PPP → 0%
+```
+
+Binary calibration: 2 states (applied/not). Ternary: 3 states.
+Octonary: 8 states — the full trajectory of the last three moments.
+The cauldron remembers where it has been.
+
 ---
 
 ## Roadmap
