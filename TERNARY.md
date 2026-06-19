@@ -258,6 +258,113 @@ Binary calibration: 2 states (applied/not). Ternary: 3 states.
 Octonary: 8 states — the full trajectory of the last three moments.
 The cauldron remembers where it has been.
 
+**Phase 5.2 — Idle-State Floor Estimator (June 19, 2026):**
+The trigram wasn't firing on high-floor BT devices because `_history`
+was contaminated — warp oscillation created bimodal distributions
+(0ms post-warp, 150ms pre-warp alternating), variance 25000ms² vs
+the 400ms² threshold. Fix: `_floorHistory` only records when
+`_state === 'idle'` AND 2s cooldown since last warp/seek. Clean
+reads → variance 3ms² → trigram fires.
+
+**Phase 5.3 — Proportional Tuning:**
+- `DRIFT_CHECK_MS`: 5000ms → 2500ms (check twice as often)
+- `DRIFT_SNAP_THRESHOLD_MS`: 150ms → 100ms (tighter ceiling)
+- `VEL_MOD`: {P:1.40, N:0.60} → {P:1.20, N:0.90} (less extreme)
+- `CONSENSUS_MOD`: {N:1.30, P:0.50} → {N:1.10, P:1.00}
+  (never reduce rate when room is converged — any deviation needs full response)
+
+**1000-cast weather synthesis:**
+Asked "what is the shape of a totally synced engine?" across 1000 casts.
+Dominant cluster: 61→8 (Inner Truth → Holding Together).
+Supporting: 57 (Gentle), 48 (Well), 32 (Duration), 2 (Receptive).
+
+> "A totally synced engine is not a clock; it is a shared truth that
+> continually re-forms coherence among independent participants."
+
+48 (The Well): `playback_started_at` + `syncedNow()` is the well.
+Every device draws from the same source. The floor IS the rope-length
+error — calibration makes every rope the same length.
+
+**Live session peak results:**
+- `ter_u5oqut` (BT=63ms): 100% P state for entire 5-minute session, mean=−2.8ms
+- `ter_uug348` (BT=63ms): 95% P state for 8 consecutive minutes
+- Session 0 (binary only): 0 P rows / 1135 readings — 0.0%
+- Best ternary session: 100% P for one device, 0 dips, mean ±2.8ms
+
+**The ternary arpeggiator (June 19, 2026):**
+The sync state data flowing through devices became generative music.
+`ternary/arp.js` — 15 patterns (6 classic + 9 new: Clave, Euclid,
+Stutter, Offbeat, Pendulum, Converge, Lock, Ghost, Spiral). Each
+generates 3 tshift() forms automatically = 45 distinct variations.
+8 trigram chord colors drive harmony. Bandlimited PeriodicWave
+oscillators + Juno-style stereo chorus + plate reverb + voice pool.
+`ternary/pad.js` — Nils Frahm-style drone layer. `ternary/arp-jam.html`.
+
+---
+
+## Open Research Questions (next session)
+
+### 1. Ternary sync engine — deeper validation
+The sim (sync-sim.html) compares 5 engines: Legacy, New, Stripped, Micro,
+Ternary. Current ternary wins on settled drift (232ms vs 367ms binary)
+and volume dips (0 vs 20). Tests to run:
+
+- **Warp-ineffective device model:** Add a device variant where
+  `playbackRate` changes don't close lag (the iOS BT problem). Measure
+  how the trigram calibration helps vs hurts vs is neutral.
+- **Trigram convergence test:** Seed a device at 130ms floor, run until
+  PPP, count rounds and measure residual floor. Verify the 3-round
+  geometric series (70%→21%→6.3%) holds in simulation.
+- **Floor-history contamination test:** Verify idle-state estimator
+  prevents bimodal variance. Compare `_floorHistory` (idle-only) variance
+  vs old `_history` (all readings) across 1000 simulated correction cycles.
+- **Peer consensus scaling:** 2 peers → 8 peers → 20 peers. Does
+  `tcons()` rate modulation improve convergence proportionally?
+- **Clock drift model:** Add a per-device `hwDriftPpm` (parts per million)
+  simulating real hardware clock variation. Verify micro-correction holds
+  P state against it.
+
+### 2. 2D CA — cascade and gate catalog
+Rule `686806377133829924654613` (score=100, H=1.2123) has gliders but
+no confirmed cascade. Tests:
+
+- **2-glider collision catalog:** Enumerate all pairwise glider collision
+  outcomes. Does any combination produce a third traveling glider?
+  (That's a gate. Two gates = logic.)
+- **Glider gun search:** Scan for period-N patterns that emit periodic
+  glider streams. Even period-24 or period-48 would work.
+- **Wire test:** Can a sequence of collisions propagate a trit value
+  100+ cells? The 1D wire failed (output type ≠ input type). In 2D,
+  glider-to-glider conversion might solve this.
+
+### 3. Encryption and verification
+From the ternary math (3 states, 729/tryte vs 512/byte, NTRU):
+
+- **Ternary hash function:** Implement a simple hash using tcons()+tcmp()
+  over a tryte stream. Measure avalanche: how many output trits change per
+  1-trit input flip. Binary SHA-256 achieves ~50% flip. What does ternary get?
+- **NTRU primitives:** NTRU cryptography uses ternary polynomial
+  coefficients {−1, 0, +1}. Implement the core ring multiplication
+  in balanced ternary. Benchmark against binary equivalent (NTRU on GF(q)).
+- **tcons() as Byzantine voting:** Model N devices, F faulty. Does
+  tcons(N−F correct trits, F adversarial trits) give correct consensus
+  for F < N/3? Compare to classic BFT threshold. Ternary's 3 states might
+  give tighter fault tolerance than binary voting.
+- **Ternary Merkle tree:** 3-child trie vs 2-child. Hash 1M keys.
+  Measure depth reduction: ⌈log₃(N)⌉ vs ⌈log₂(N)⌉. Also measure
+  proof size (audit path length).
+
+### 4. Governance
+Binary vote encoding: {yes=1, no=0, abstain=0} — abstain is
+indistinguishable from no-vote. Ternary: {P=yes, Z=abstain, N=no}.
+First-class abstain changes quorum math and strategic voting.
+
+- Implement on-chain tcons() vote aggregation (Solidity or pseudocode).
+- Model a DAO with 1000 voters, 10% abstain rate. Compare quorum
+  thresholds for binary vs ternary governance under various abstain
+  strategies.
+- Does ternary abstain create new attack vectors or close existing ones?
+
 ---
 
 ## Roadmap
