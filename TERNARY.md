@@ -285,6 +285,72 @@ Supporting: 57 (Gentle), 48 (Well), 32 (Duration), 2 (Receptive).
 Every device draws from the same source. The floor IS the rope-length
 error — calibration makes every rope the same length.
 
+---
+
+## The Shape of a Perfect Engine — 1000-Cast Weather (June 19, 2026)
+
+*Question asked:* **"What is the shape of a totally synced engine?"**
+
+1000 I Ching casts. Statistical distillation of the hexagram field.
+
+### Dominant Weather
+**61 — Inner Truth · 57 — The Gentle · 8 — Holding Together**
+**48 — The Well · 32 — Duration · 20 — Contemplation**
+**17 — Following · 2 — The Receptive**
+
+### Answer Zone
+**61 → 8** (Inner Truth → Holding Together)
+Supporting: 57→61, 48→57, 32 unchanging, 17→8
+
+### Gestalt
+
+A totally synced engine is **not a commander**.
+
+It is not broadcasting harder. Not enforcing timing. Not centralizing control.
+
+> **A field that continuously converges.**
+
+**48 — The Well**
+The synced engine acts like a well. Every node approaches. Every node draws
+from the same source. The source remains stable. The participants move.
+The well doesn't chase anyone. This is very different than a master clock.
+
+**57 — The Gentle**
+Synchronization is achieved through continual tiny corrections, pervasive
+influence, low-force adaptation. Not giant jumps. Not resets. Not coercion.
+
+**61 — Inner Truth**
+A perfectly synced engine is one where every node possesses the same truth.
+Not the same timestamp. The same reality. The same reference frame.
+The same story of what is happening.
+
+**61 → 8**
+A synced engine is: independent centres that arrive at cohesion because they
+trust the same underlying signal. Not because they are controlled. Because they agree.
+
+**32 — Duration**
+The system isn't synchronised once. It remains synchronised. The synchronisation
+mechanism itself is durable. It survives drift. It survives interruption.
+It survives distance.
+
+### Technical Translation
+
+> Don't synchronise outputs. Synchronise **understanding**.
+
+Every phone should know: what song is playing · where the song is ·
+where everyone else is · what the group consensus is.
+Then each device self-corrects.
+
+### The One Sentence Answer
+
+> *A totally synced engine is not a clock; it is a shared truth that
+> continually re-forms coherence among independent participants.*
+
+Not one leader. Not one speaker. Not one authority.
+A well of shared state that everyone continuously drinks from.
+
+---
+
 **Live session peak results:**
 - `ter_u5oqut` (BT=63ms): 100% P state for entire 5-minute session, mean=−2.8ms
 - `ter_uug348` (BT=63ms): 95% P state for 8 consecutive minutes
